@@ -48,6 +48,7 @@ class CGpaint extends JFrame{
 class Display extends JPanel{
 	int mouse=0,xMin,xMax,yMin,yMax,xInicio=0,xFim=0,yInicio=0,yFim=0,x01,y01,x02,y02;
 	Celula k=null;
+	double u1=0.0,u2=1.0;
 	boolean umaVez=false,reflexao=false,escala=false,refletir=false,mais=false,menos=false;
 	boolean cima=false,baixo=false,esquerda=false,direita=false,rotacionar=false;
 	boolean pressionado=false,dda_abilitado=false,bresenhan_abilitado=false,circunferencia_abilitado=false,desenho_livre=true, borracha=false,clear=false,retangulo=false,recorte=false,cohen=false, liang=false,rasterizacao=false,posicaoRecorte=false,translacao=false,click=false,rotacao=false;
@@ -1221,7 +1222,33 @@ class Display extends JPanel{
 				}
 			}
 			else if(liang){
-
+				xMin=Menor(x1,x2);
+				yMin=Menor(y1,y2);
+				xMax=Maior(x1,x2);
+				yMax=Maior(y1,y2);
+				u1=0.0;
+				u2=1.0;
+				for(Celula i=quadro.primeiro;i!=null;i=i.prox){
+					dx=i.elemento.get(i.elemento.size()-1).x-i.elemento.get(0).x;
+					dy=i.elemento.get(i.elemento.size()-1).y-i.elemento.get(0).y;
+					if(cliptest(-dx,i.elemento.get(0).x-xMin,u1,u2)){
+						if(cliptest(dx,xMax-i.elemento.get(0).x,u1,u2)){
+							if(cliptest(-dy,i.elemento.get(0).y-yMin,u1,u2)){
+								if(cliptest(dy,yMax-i.elemento.get(0).y,u1,u2)){
+									if(u2<1.0){
+										i.elemento.get(i.elemento.size()-1).x=(int)(i.elemento.get(0).x+u2*dx);
+										i.elemento.get(i.elemento.size()-1).y=(int)(i.elemento.get(0).y+u2*dy);
+									}
+									if(u1>0.0){
+										i.elemento.get(0).x=(int)(i.elemento.get(0).x+u1*dx);
+										i.elemento.get(0).y=(int)(i.elemento.get(0).y+u1*dy);
+									}
+									g.drawLine(Math.round(i.elemento.get(0).x),Math.round(i.elemento.get(0).y),Math.round(i.elemento.get(i.elemento.size()-1).x),Math.round(i.elemento.get(i.elemento.size()-1).y));
+								}
+							}
+						}
+					}
+				}
 			}
 			else if(rasterizacao){
 				if(!desenhos.isEmpty()){
@@ -1281,6 +1308,33 @@ class Display extends JPanel{
 			return x;
 		}
 		return y;
+	}
+
+	public boolean cliptest(int p,int q, double u1,double u2){
+		boolean result=true;
+		double r;
+		if(p<0.0){
+			r=q/p;
+			if(r>u2){
+				result=false;
+			}
+			else if(r>u1){
+				u1=r;
+			}
+		}
+		else if(p>0.0){
+			r=q/p;
+			if(r<u1){
+				result=false;
+			}
+			else if(r<u2){
+				u2=r;
+			}
+		}
+		else if(q<0.0){
+			result=false;
+		}
+		return result;
 	}
 
 	public class time extends Thread{
