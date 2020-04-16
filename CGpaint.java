@@ -6,7 +6,11 @@ import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.awt.Color;
 import javax.imageio.ImageIO;
@@ -23,7 +27,7 @@ import java.awt.event.KeyAdapter;
 class CGpaint extends JFrame{
 	public CGpaint(){
 		setTitle("CG Paint");
-		setSize(1030,700);
+		setSize(1015,700);
 		setLocationRelativeTo(null);
 		setBackground(Color.WHITE);
 		setResizable(false);
@@ -46,10 +50,10 @@ class CGpaint extends JFrame{
 }
 
 class Display extends JPanel{
-	int mouse=0,xMin,xMax,yMin,yMax,xInicio=0,xFim=0,yInicio=0,yFim=0,x01,y01,x02,y02;
+	int mouse=0,xMin,xMax,yMin,yMax,xInicio=0,xFim=0,yInicio=0,yFim=0,x01,y01,x02,y02,cor=1;
 	Celula k=null;
 	double u1=0.0,u2=1.0;
-	boolean umaVez=false,reflexao=false,escala=false,refletir=false,mais=false,menos=false;
+	boolean salvar=false,load=true,reflexao=false,escala=false,refletir=false,mais=false,menos=false;
 	boolean cima=false,baixo=false,esquerda=false,direita=false,rotacionar=false;
 	boolean pressionado=false,dda_abilitado=false,bresenhan_abilitado=false,circunferencia_abilitado=false,desenho_livre=true, borracha=false,clear=false,retangulo=false,recorte=false,cohen=false, liang=false,rasterizacao=false,posicaoRecorte=false,translacao=false,click=false,rotacao=false;
 	JButton btn_dda = new JButton("DDA");
@@ -75,14 +79,22 @@ class Display extends JPanel{
 	JButton btn_okTransformacao = new JButton("OK");
 	JButton btn_mais = new JButton("Mais");
 	JButton btn_menos = new JButton("Menos");
+	JButton btn_preencher = new JButton("Preenchimento");
+	JButton btn_vermelho = new JButton("");
+	JButton btn_verde = new JButton("");
+	JButton btn_preto = new JButton("");
+	JButton btn_azul = new JButton("");
+	JButton btn_amarelo = new JButton("");
+	JButton btn_salvar = new JButton("Salvar");
 	Lista quadro=new Lista();
 
 	public Display(){
+		//Ação realizada ao clicar no botão DDA
 		btn_dda.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=true;
-				umaVez=true;
 				desenho_livre=false;
 				borracha=false;
 				translacao=false;
@@ -101,11 +113,12 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Bresenhan
 		btn_bresenhan.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=false;
-				umaVez=true;
 				bresenhan_abilitado=true;
 				desenho_livre=false;
 				borracha=false;
@@ -125,8 +138,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Circunferencia
 		btn_circunferencia.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=false;
 				bresenhan_abilitado=false;
@@ -149,8 +164,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Desenho Livre
 		btn_livre.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				desenho_livre=true;
 				translacao=false;
@@ -169,8 +186,10 @@ class Display extends JPanel{
 				setMouse(2);
 			}
 		});
+		//Ação realizada ao clicar no botão Borracha
 		btn_borracha.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				quadro.clear();
 				desenhos.clear();
 				desenho_livre=false;
@@ -191,10 +210,11 @@ class Display extends JPanel{
 				setMouse(3);
 			}
 		});
+		//Ação realizada ao clicar no botão Retangulos
 		btn_retangulo.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
-				umaVez=true;
 				dda_abilitado=false;
 				bresenhan_abilitado=false;
 				circunferencia_abilitado=false;
@@ -217,8 +237,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Recorte
 		btn_recorte.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=false;
 				bresenhan_abilitado=false;
@@ -243,12 +265,13 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Limpar Quadro
 		btn_clear.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				quadro.clear();
 				desenhos.clear();
 				k=null;
-				desenhosPermanentes.clear();
 				clear=true;
 				translacao=false;
 				rotacao=false;
@@ -266,8 +289,10 @@ class Display extends JPanel{
 				btn_okTransformacao.setVisible(false);
 			}
 		});
+		//Ação realizada ao clicar no botão Cohen-Sutherland
 		btn_cohen.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=false;
 				bresenhan_abilitado=false;
@@ -294,8 +319,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Liang-Barsky
 		btn_liang.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=false;
 				bresenhan_abilitado=false;
@@ -323,8 +350,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Rasterização de Retas
 		btn_rasterizacao.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				dda_abilitado=false;
 				bresenhan_abilitado=false;
@@ -353,8 +382,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Translação
 		btn_translacao.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				translacao=true;
 				cima=false;
@@ -373,6 +404,7 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão OK
 		btn_okTransformacao.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				translacao=false;
@@ -390,8 +422,10 @@ class Display extends JPanel{
 				btn_okTransformacao.setVisible(false);
 			}
 		});
+		//Ação realizada ao clicar no botão Rotação
 		btn_rotacao.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				rotacao=true;
 				k=null;
@@ -406,8 +440,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Reflexão
 		btn_reflexao.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				reflexao=true;
 				k=null;
@@ -422,8 +458,10 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Escala
 		btn_escala.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
+				load=false;
 				desenhos.clear();
 				escala=true;
 				mais=false;
@@ -440,42 +478,92 @@ class Display extends JPanel{
 				setMouse(1);
 			}
 		});
+		//Ação realizada ao clicar no botão Cima
 		btn_cima.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				cima=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Baixo
 		btn_baixo.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				baixo=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Esquerda
 		btn_esquerda.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				esquerda=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Direita
 		btn_direita.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				direita=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Rotacionar
 		btn_rotacionar.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				rotacionar=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Mais
 		btn_mais.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				mais=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Menos
 		btn_menos.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				menos=true;
 			}
 		});
+		//Ação realizada ao clicar no botão Salvar
+		btn_salvar.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				load=false;
+				salvar=true;
+			}
+		});
+		//Ação realizada ao clicar no botão vermelho
+		btn_vermelho.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				load=false;
+				cor=0;
+			}
+		});
+		//Ação realizada ao clicar no botão preto
+		btn_preto.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				load=false;
+				cor=1;
+			}
+		});
+		//Ação realizada ao clicar no botão verde
+		btn_verde.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				load=false;
+				cor=2;
+			}
+		});
+		//Ação realizada ao clicar no botão azul
+		btn_azul.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				load=false;
+				cor=3;
+			}
+		});
+		//Ação realizada ao clicar no botão amarelo
+		btn_amarelo.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				load=false;
+				cor=4;
+			}
+		});
 		setLayout(null);
+		//Posicionamento dos botões
 		btn_dda.setBounds(10,10,65,20);
 		btn_bresenhan.setBounds(90,10,115,20);
 		btn_circunferencia.setBounds(220,10,140,20);
@@ -488,17 +576,24 @@ class Display extends JPanel{
 		btn_cohen.setBounds(215,40,165,20);
 		btn_liang.setBounds(390,40,140,20);
 		btn_translacao.setBounds(540,40,115,20);
-		btn_cima.setBounds(10,70,70,20);
-		btn_baixo.setBounds(90,70,75,20);
-		btn_esquerda.setBounds(175,70,105,20);
-		btn_direita.setBounds(290,70,85,20);
-		btn_rotacionar.setBounds(385,70,115,20);
+		btn_vermelho.setBounds(10,70,25,20);
+		btn_preto.setBounds(45,70,25,20);
+		btn_verde.setBounds(80,70,25,20);
+		btn_azul.setBounds(115,70,25,20);
+		btn_amarelo.setBounds(150,70,25,20);
+		btn_cima.setBounds(185,70,70,20);
+		btn_baixo.setBounds(265,70,75,20);
+		btn_esquerda.setBounds(350,70,105,20);
+		btn_direita.setBounds(465,70,85,20);
+		btn_rotacionar.setBounds(560,70,115,20);
 		btn_rotacao.setBounds(665,40,95,20);
 		btn_escala.setBounds(770,40,80,20);
 		btn_reflexao.setBounds(860,40,95,20);
-		btn_mais.setBounds(510,70,70,20);
-		btn_menos.setBounds(590,70,85,20);
-		btn_okTransformacao.setBounds(685,70,55,20);
+		btn_mais.setBounds(685,70,70,20);
+		btn_menos.setBounds(765,70,85,20);
+		btn_okTransformacao.setBounds(860,70,55,20);
+		btn_salvar.setBounds(925,70,80,20);
+		//Inserindo os botões na janela
 		add(btn_dda);
 		add(btn_bresenhan);
 		add(btn_circunferencia);
@@ -522,6 +617,17 @@ class Display extends JPanel{
 		add(btn_reflexao);
 		add(btn_mais);
 		add(btn_menos);
+		add(btn_salvar);
+		add(btn_vermelho);
+		add(btn_preto);
+		add(btn_verde);
+		add(btn_azul);
+		add(btn_amarelo);
+		btn_vermelho.setBackground(Color.RED);
+		btn_preto.setBackground(Color.BLACK);
+		btn_verde.setBackground(Color.GREEN);
+		btn_azul.setBackground(Color.BLUE);
+		btn_amarelo.setBackground(Color.YELLOW);
 		btn_cima.setVisible(false);
 		btn_baixo.setVisible(false);
 		btn_esquerda.setVisible(false);
@@ -531,16 +637,27 @@ class Display extends JPanel{
 		btn_menos.setVisible(false);
 		btn_okTransformacao.setVisible(false);
 		addMouseListener(new MouseListener(){
+			/*
+			Caso o mouse for pressionado, apagamos as referências do desenho anterior
+			para que um não se conecte ao outro, e habilitamos a variável pressionado
+			que irá fazer com que uma figura seja desenhada, apenas se o mouse for pressionado 
+			*/
 			public void mousePressed (MouseEvent e){
 				pressionado=true;
 				desenhos.clear();
 			}
+			/*
+			Armazenamos o desenho livre apenas quando o mouse não está mais sendo pressionado,
+			pois o desenho livre é o único tipo de desenho neste software que plota os pontos
+			em tempo real. Ou seja, os outros métodos apenas irão plotar os desenhos
+			depois que o mouse for pressionado e liberado
+			*/
 			public void mouseReleased (MouseEvent e){
 				if(desenho_livre){
 					quadro.inserir(desenhos);
+					desenhos.clear();
 				}
 				pressionado=false;
-				posicaoRecorte=true; //variavel auxiliar utilizada apenas para salvar a posicao inicial e final de uma reta para o arraylist de desenhos permanetes, o qual sera usado para os metodos de recorte (cohen-sutherland e liang-barsky)
 			}
 			public void mouseExited (MouseEvent e){
 			}
@@ -548,6 +665,9 @@ class Display extends JPanel{
 			}
 			public void mouseClicked (MouseEvent e){
 				Point p=getMousePosition();
+				/*Métodos que utilizam a variável click para encontrar qual objeto
+				o usuário deseja manipular
+				*/
 				if(p.y>=100 && (translacao||rotacao||reflexao||escala)){
 					click=true;
 				}
@@ -558,7 +678,6 @@ class Display extends JPanel{
 		});
 		addKeyListener(new KeyAdapter(){
 			public void keyTyped(KeyEvent e){
-
 			}
 			public void keyReleased(KeyEvent e){
 				cima=false;
@@ -582,10 +701,11 @@ class Display extends JPanel{
 
 			}
 		});
-		setMouse(2);
 		new time().start();
 	}
-
+	/*
+	Método usado para trocar o cursor do mouse por uma imagem. Usado para a borracha
+	*/
 	public void MudaCursor(String nomeImagem){
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 		Image img = toolkit.getImage(nomeImagem);
@@ -594,6 +714,9 @@ class Display extends JPanel{
 		setCursor(cursor);
 	}
 
+	/*
+	Método onde é realizada a troca do ícone do mouse, dependendo da opcao selecionada pelo usuário
+	*/
 	void setMouse(int mouse){
 		Cursor cursor;
 		if(mouse==1){
@@ -616,8 +739,10 @@ class Display extends JPanel{
 	}
 
 	ArrayList<desenho> desenhos = new ArrayList<>();
-	ArrayList<posicoes> desenhosPermanentes = new ArrayList<>();
 
+	/*
+	Classe usada para armazenar os pontos de cada desenho
+	*/
 	public class desenho{
 		int x,y;
 		public desenho(int x,int y){
@@ -625,30 +750,82 @@ class Display extends JPanel{
 			this.y=y;
 		}
 	}
-
-	public class posicoes{
-		desenho inicio,fim;
-		public posicoes(desenho inicio,desenho fim){
-			this.inicio=inicio;
-			this.fim=fim;
-		}
-	} 
-	
+	/*
+	Método onde é feito os plots dos desenhos
+	*/
 	public void paintComponent(Graphics g){
-		g.setColor(Color.black);
-		g.fillRect(0, 0, 1030, 100);
-		if(clear){
-			g.clearRect(0, 100, 1030, 600);
+		g.setColor(Color.BLACK);
+		g.fillRect(0, 0, 1015, 100);
+		/*
+		Lê o arquivo quadro.txt e recupera os desenhos que foram salvos
+		*/
+		if(load){
+			File file=new File("quadro.txt");
+			String line=null;
+			try{
+				if(!file.exists()){
+					file.createNewFile();
+				}
+				FileReader fr=new FileReader(file);
+				BufferedReader br=new BufferedReader(fr);
+				while((line=br.readLine())!=null){
+					ArrayList<desenho> tmp = new ArrayList<>();
+					quadro.inserir(tmp);
+					quadro.ultimo.cor=Integer.parseInt(line);
+					line=br.readLine();
+					String coordenadas[]=line.split(" ");
+					for(int i=0;i<coordenadas.length;i++){
+						String pontos[]=coordenadas[i].split(",");
+						quadro.ultimo.elemento.add(new desenho(Integer.parseInt(pontos[0]),Integer.parseInt(pontos[1])));
+						if(quadro.ultimo.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(quadro.ultimo.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(quadro.ultimo.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(quadro.ultimo.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(quadro.ultimo.cor==4){
+							g.setColor(Color.YELLOW);
+						}
+						g.drawLine(Integer.parseInt(pontos[0]),Integer.parseInt(pontos[1]),Integer.parseInt(pontos[0]),Integer.parseInt(pontos[1]));
+					}
+				}
+				br.close();
+			}catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+		/*
+		Caso o botão limpar quadro for selecionado, a opção clear irá limpar o quadro
+		*/
+		else if(clear){
+			g.clearRect(0, 100, 1015, 600);
 			btn_translacao.setBounds(540,40,115,20);
 			btn_rotacao.setBounds(665,40,95,20);
 			btn_escala.setBounds(770,40,80,20);
 			btn_reflexao.setBounds(860,40,95,20);
+			load=false;
 			clear=false;
 		}
+		/*
+		Caso o botão translação for selecionado, executaremos o if abaixo
+		*/
 		else if(translacao){
 			int passos=5;
+			/*
+			Caso o usuário clique na tela (dentro da região válida), ou seja,
+			dentro da janela de desenho e abaixo da região dos botões
+			*/
 			if(click){
 				Point pointer = getMousePosition();
+				/*
+				Buscamos o objeto selecionado e que será transladado
+				*/
 				for(Celula i=quadro.primeiro;i!=null;i=i.prox){
 					for(int j=0;j<i.elemento.size();j++){
 						if((i.elemento.get(j).x<=pointer.x+2&&i.elemento.get(j).x>=pointer.x-2)&&(i.elemento.get(j).y<=pointer.y+2&&i.elemento.get(j).y>=pointer.y-2)){
@@ -665,59 +842,149 @@ class Display extends JPanel{
 				yInicio=k.elemento.get(0).y;
 				xFim=k.elemento.get(k.elemento.size()-1).x;
 				yFim=k.elemento.get(k.elemento.size()-1).y;
+				/*
+				Move o objeto para cima
+				*/
 				if(cima){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de caminharmos com eles*/
 					for(int i=0;i<k.elemento.size();i++){
 						g.setColor(Color.WHITE);
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					for(int i=0;i<k.elemento.size();i++){
 						k.elemento.get(i).y=k.elemento.get(i).y-passos;
-						g.setColor(Color.BLACK);
+						//o desenho é plotado de acordo com a cor do objeto
+						if(k.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(k.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(k.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(k.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(k.cor==4){
+							g.setColor(Color.YELLOW);
+						}
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					cima=false;
 				}
+				/*
+				Move o objeto para baixo
+				*/
 				else if(baixo){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de caminharmos com eles*/
 					for(int i=0;i<k.elemento.size();i++){
 						g.setColor(Color.WHITE);
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					for(int i=0;i<k.elemento.size();i++){
 						k.elemento.get(i).y=k.elemento.get(i).y+passos;
-						g.setColor(Color.BLACK);
+						//o desenho é plotado de acordo com a cor do objeto
+						if(k.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(k.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(k.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(k.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(k.cor==4){
+							g.setColor(Color.YELLOW);
+						}
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					baixo=false;
 				}
+				/*
+				Move o objeto para direita
+				*/
 				else if(direita){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de caminharmos com eles*/
 					for(int i=0;i<k.elemento.size();i++){
 						g.setColor(Color.WHITE);
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					for(int i=0;i<k.elemento.size();i++){
 						k.elemento.get(i).x=k.elemento.get(i).x+passos;
-						g.setColor(Color.BLACK);
+						//o desenho é plotado de acordo com a cor do objeto
+						if(k.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(k.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(k.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(k.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(k.cor==4){
+							g.setColor(Color.YELLOW);
+						}
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					direita=false;
 				}
+				/*
+				Move o objeto para esquerda
+				*/
 				else if(esquerda){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de caminharmos com eles*/
 					for(int i=0;i<k.elemento.size();i++){
 						g.setColor(Color.WHITE);
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					for(int i=0;i<k.elemento.size();i++){
 						k.elemento.get(i).x=k.elemento.get(i).x-passos;
-						g.setColor(Color.BLACK);
+						//o desenho é plotado de acordo com a cor do objeto
+						if(k.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(k.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(k.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(k.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(k.cor==4){
+							g.setColor(Color.YELLOW);
+						}
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
 					esquerda=false;
 				}
 			}
 		}
+		/*
+		Caso o botão rotação for selecionado, executaremos o if abaixo
+		*/
 		else if(rotacao){
+			/*
+			Caso o usuário clique na tela (dentro da região válida), ou seja,
+			dentro da janela de desenho e abaixo da região dos botões
+			*/
 			if(click){
 				Point pointer = getMousePosition();
+				/*
+				Buscamos o objeto selecionado e que será rotacionado
+				*/
 				for(Celula i=quadro.primeiro;i!=null;i=i.prox){
 					for(int j=0;j<i.elemento.size();j++){
 						if((i.elemento.get(j).x<=pointer.x+2&&i.elemento.get(j).x>=pointer.x-2)&&(i.elemento.get(j).y<=pointer.y+2&&i.elemento.get(j).y>=pointer.y-2)){
@@ -734,54 +1001,85 @@ class Display extends JPanel{
 				}
 			}
 			else{
+				/*
+				Rotaciona o objeto
+				*/
 				if(rotacionar){
-				for(int i=0;i<k.elemento.size();i++){
-					g.setColor(Color.WHITE);
-					g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
-				}
-				for(int i=0;i<k.elemento.size();i++){
-					int xAux=(int)((k.elemento.get(i).x*Math.cos(Math.PI/12))+(k.elemento.get(i).y*-(Math.sin(Math.PI/12))));
-					int yAux=(int)((k.elemento.get(i).x*Math.sin(Math.PI/12))+(k.elemento.get(i).y*Math.cos(Math.PI/12)));
-					k.elemento.get(i).x=xAux;
-					k.elemento.get(i).y=yAux;
-				}
-				/*
-				Reposicionameno do desenho
-				*/
-				while(k.elemento.get(0).x<xInicio){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de rotacionarmos eles*/
 					for(int i=0;i<k.elemento.size();i++){
-						k.elemento.get(i).x++;
+						g.setColor(Color.WHITE);
+						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
-				}
-				while(k.elemento.get(0).x>xInicio){
+					//Rotação em 15 graus
 					for(int i=0;i<k.elemento.size();i++){
-						k.elemento.get(i).x--;
+						int xAux=(int)((k.elemento.get(i).x*Math.cos(Math.PI/12))+(k.elemento.get(i).y*-(Math.sin(Math.PI/12))));
+						int yAux=(int)((k.elemento.get(i).x*Math.sin(Math.PI/12))+(k.elemento.get(i).y*Math.cos(Math.PI/12)));
+						k.elemento.get(i).x=xAux;
+						k.elemento.get(i).y=yAux;
 					}
-				}
-				while(k.elemento.get(0).y<yInicio){
+					/*
+					Reposicionameno do desenho
+					*/
+					while(k.elemento.get(0).x<xInicio){
+						for(int i=0;i<k.elemento.size();i++){
+							k.elemento.get(i).x++;
+						}
+					}
+					while(k.elemento.get(0).x>xInicio){
+						for(int i=0;i<k.elemento.size();i++){
+							k.elemento.get(i).x--;
+						}
+					}
+					while(k.elemento.get(0).y<yInicio){
+						for(int i=0;i<k.elemento.size();i++){
+							k.elemento.get(i).y++;
+						}
+					}
+					while(k.elemento.get(0).y>yInicio){
+						for(int i=0;i<k.elemento.size();i++){
+							k.elemento.get(i).y--;
+						}
+					}
+					/*
+					Plot dos pontos
+					*/
 					for(int i=0;i<k.elemento.size();i++){
-						k.elemento.get(i).y++;
+						//o desenho é plotado de acordo com a cor do objeto
+						if(k.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(k.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(k.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(k.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(k.cor==4){
+							g.setColor(Color.YELLOW);
+						}
+						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
-				}
-				while(k.elemento.get(0).y>yInicio){
-					for(int i=0;i<k.elemento.size();i++){
-						k.elemento.get(i).y--;
-					}
-				}
-				/*
-				Plot dos pontos
-				*/
-				for(int i=0;i<k.elemento.size();i++){
-					g.setColor(Color.BLACK);
-					g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
-				}
-				rotacionar=false;
+					rotacionar=false;
 				}
 			}
 		}
+		/*
+		Caso o botão reflexão for selecionado, executaremos o if abaixo
+		*/
 		else if(reflexao){
+			/*
+			Caso o usuário clique na tela (dentro da região válida), ou seja,
+			dentro da janela de desenho e abaixo da região dos botões
+			*/
 			if(click){
 				Point pointer = getMousePosition();
+				/*
+				Buscamos o objeto selecionado e que será refletido
+				*/
 				for(Celula i=quadro.primeiro;i!=null;i=i.prox){
 					for(int j=0;j<i.elemento.size();j++){
 						if((i.elemento.get(j).x<=pointer.x+2&&i.elemento.get(j).x>=pointer.x-2)&&(i.elemento.get(j).y<=pointer.y+2&&i.elemento.get(j).y>=pointer.y-2)){
@@ -794,11 +1092,16 @@ class Display extends JPanel{
 					}
 				}
 			}
+			/*
+			Reflete o objeto
+			*/
 			else if(refletir){
 				xInicio=k.elemento.get(0).x;
 				yInicio=k.elemento.get(0).y;
 				xFim=k.elemento.get(k.elemento.size()-1).x;
 				yFim=k.elemento.get(k.elemento.size()-1).y;
+				/*Colorimos os pontos do objeto em questão de branco
+				antes de refletirmos eles*/
 				for(int i=0;i<k.elemento.size();i++){
 					g.setColor(Color.WHITE);
 					g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
@@ -836,16 +1139,41 @@ class Display extends JPanel{
 				Plot dos pontos
 				*/
 				for(int i=0;i<k.elemento.size();i++){
-					g.setColor(Color.BLACK);
+					//o desenho é plotado de acordo com a cor do objeto
+					if(k.cor==0){
+						g.setColor(Color.RED);
+					}
+					else if(k.cor==1){
+						g.setColor(Color.BLACK);
+					}
+					else if(k.cor==2){
+						g.setColor(Color.GREEN);
+					}
+					else if(k.cor==3){
+						g.setColor(Color.BLUE);
+					}
+					else if(k.cor==4){
+						g.setColor(Color.YELLOW);
+					}
 					g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 				}
 				refletir=false;
 			}
 		}
+		/*
+		Caso o botão escala for selecionado, executaremos o if abaixo
+		*/
 		else if(escala){
 			int xInicio=0,yInicio=0;
+			/*
+			Caso o usuário clique na tela (dentro da região válida), ou seja,
+			dentro da janela de desenho e abaixo da região dos botões
+			*/
 			if(click){
 				Point pointer = getMousePosition();
+				/*
+				Buscamos o objeto desejado
+				*/
 				for(Celula i=quadro.primeiro;i!=null;i=i.prox){
 					for(int j=0;j<i.elemento.size();j++){
 						if((i.elemento.get(j).x<=pointer.x+2&&i.elemento.get(j).x>=pointer.x-2)&&(i.elemento.get(j).y<=pointer.y+2&&i.elemento.get(j).y>=pointer.y-2)){
@@ -860,11 +1188,17 @@ class Display extends JPanel{
 			else{
 				xInicio=k.elemento.get(0).x;
 				yInicio=k.elemento.get(0).y;
+				/*
+				Aumenta o tamanho do objeto
+				*/
 				if(mais){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de aumentarmos eles*/
+					g.setColor(Color.WHITE);
 					for(int i=0;i<k.elemento.size();i++){
-						g.setColor(Color.WHITE);
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
+					//O objeto é aumentado em mais 50% de seu tamanho inicial
 					for(int i=0;i<k.elemento.size();i++){
 						k.elemento.get(i).x=(int)(k.elemento.get(i).x*1.5);
 						k.elemento.get(i).y=(int)(k.elemento.get(i).y*1.5);
@@ -875,11 +1209,17 @@ class Display extends JPanel{
 					}
 					mais=false;
 				}
+				/*
+				Diminui o tamanho do objeto
+				*/
 				else if(menos){
+					/*Colorimos os pontos do objeto em questão de branco
+					antes de diminuirmos eles*/
+					g.setColor(Color.WHITE);
 					for(int i=0;i<k.elemento.size();i++){
-						g.setColor(Color.WHITE);
 						g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 					}
+					//Reduzimos o objeto pela metade
 					for(int i=0;i<k.elemento.size();i++){
 						k.elemento.get(i).x=(int)(k.elemento.get(i).x*0.5);
 						k.elemento.get(i).y=(int)(k.elemento.get(i).y*0.5);
@@ -915,21 +1255,62 @@ class Display extends JPanel{
 						}
 					}
 				}
+				/*
+				Plot dos pontos
+				*/
 				for(int i=0;i<k.elemento.size();i++){
-					g.setColor(Color.BLACK);
+					//o desenho é plotado de acordo com a cor do objeto
+					if(k.cor==0){
+						g.setColor(Color.RED);
+					}
+					else if(k.cor==1){
+						g.setColor(Color.BLACK);
+					}
+					else if(k.cor==2){
+						g.setColor(Color.GREEN);
+					}
+					else if(k.cor==3){
+						g.setColor(Color.BLUE);
+					}
+					else if(k.cor==4){
+						g.setColor(Color.YELLOW);
+					}
 					g.drawLine(k.elemento.get(i).x,k.elemento.get(i).y,k.elemento.get(i).x,k.elemento.get(i).y);
 				}
 			}
 		}
+		/*
+		O algoritmo inicia executando este método, e caso o botão desenho livre
+		for selecionado, executaremos o if abaixo
+		*/
 		else if(desenho_livre){
 			for(int i=1;i<desenhos.size();i++){
 				int x = desenhos.get(i).x;
 				int y = desenhos.get(i).y;
 				int x2 = desenhos.get(i-1).x;
 				int y2 = desenhos.get(i-1).y;
+				//o desenho é plotado de acordo com a cor desejada
+				if(cor==0){
+					g.setColor(Color.RED);
+				}
+				else if(cor==1){
+					g.setColor(Color.BLACK);
+				}
+				else if(cor==2){
+					g.setColor(Color.GREEN);
+				}
+				else if(cor==3){
+					g.setColor(Color.BLUE);
+				}
+				else if(cor==4){
+					g.setColor(Color.YELLOW);
+				}
 				g.drawLine(x2,y2,x,y);
 			}
 		}
+		/*
+		Caso o botão borracha for selecionado, executaremos o if abaixo
+		*/
 		else if(borracha){
 			for(int i=1;i<desenhos.size();i++){
 				int x = desenhos.get(i).x;
@@ -937,16 +1318,25 @@ class Display extends JPanel{
 				g.clearRect(x, y, 50, 50);
 			}
 		}
+		/*
+		Executamos os if's abaixo somente se o botão do mouse não estiver pressionado,
+		pois coletamo os pontos que serão usados, e o tamanho das retas (DDA e Bresenhan)
+		além de coletarmos o tamanho desejado para a circunferencia, retangulo e área para
+		recorte
+		*/
 		else if(!pressionado){
-			if(posicaoRecorte){
-				desenhosPermanentes.add(new posicoes(desenhos.get(0),desenhos.get(desenhos.size()-1)));
-				posicaoRecorte = false;
-			}
 			int x1=desenhos.get(0).x, y1=desenhos.get(0).y,x2=desenhos.get(desenhos.size()-1).x,y2=desenhos.get(desenhos.size()-1).y,dx,dy;
+			/*
+			Caso o botão DDA for selecionado, executaremos o if abaixo
+			*/
 			if(dda_abilitado){
+				/*Com o intuito de evitar alocar inúmeros desenhos vazios na lista,
+				verificamos se o array list desenhos encontra-se preenchido
+				e alocamos um novo elemento na lista de desenhos*/
 				if(!desenhos.isEmpty()){
 					ArrayList<desenho> tmp = new ArrayList<>();
 					quadro.inserir(tmp);
+					quadro.ultimo.cor=cor;
 					desenhos.clear();
 				}
 				int passos,k;
@@ -963,19 +1353,46 @@ class Display extends JPanel{
 				y_incr=dy/passos;
 				x=x1;
 				y=y1;
+				//o desenho é plotado de acordo com a cor desejada
+				if(cor==0){
+					g.setColor(Color.RED);
+				}
+				else if(cor==1){
+					g.setColor(Color.BLACK);
+				}
+				else if(cor==2){
+					g.setColor(Color.GREEN);
+				}
+				else if(cor==3){
+					g.setColor(Color.BLUE);
+				}
+				else if(cor==4){
+					g.setColor(Color.YELLOW);
+				}
+				//plot do ponto
 				g.drawLine((int)(Math.round(x)/1.0),(int)(Math.round(y)/1.0),(int)(Math.round(x)/1.0),(int)(Math.round(y)/1.0));
+				//armazenamos o ponto na lista de desenhos
 				quadro.ultimo.elemento.add(new desenho((int)(Math.round(x)/1.0),(int)(Math.round(y)/1.0)));
 				for(k=1;k<=passos;k++){
 					x=x+x_incr;
 					y=y+y_incr;
+					//armazenamos o ponto na lista de desenhos
 					quadro.ultimo.elemento.add(new desenho((int)(Math.round(x)/1.0),(int)(Math.round(y)/1.0)));
+					//plot do ponto
 					g.drawLine((int)(Math.round(x)/1.0),(int)(Math.round(y)/1.0),(int)(Math.round(x)/1.0),(int)(Math.round(y)/1.0));
 				}
 			}
+			/*
+			Caso o botão Bresenhan for selecionado, executaremos o if abaixo
+			*/
 			else if(bresenhan_abilitado){
+				/*Com o intuito de evitar alocar inúmeros desenhos vazios na lista,
+				verificamos se o array list desenhos encontra-se preenchido
+				e alocamos um novo elemento na lista de desenhos*/
 				if(!desenhos.isEmpty()){
 					ArrayList<desenho> tmp = new ArrayList<>();
 					quadro.inserir(tmp);
+					quadro.ultimo.cor=cor;
 					desenhos.clear();
 				}
 				int x,y,const1,const2,p,incrx,incry,i;
@@ -997,7 +1414,25 @@ class Display extends JPanel{
 				}
 				x=x1;
 				y=y1;
+				//o desenho é plotado de acordo com a cor desejada
+				if(cor==0){
+					g.setColor(Color.RED);
+				}
+				else if(cor==1){
+					g.setColor(Color.BLACK);
+				}
+				else if(cor==2){
+					g.setColor(Color.GREEN);
+				}
+				else if(cor==3){
+					g.setColor(Color.BLUE);
+				}
+				else if(cor==4){
+					g.setColor(Color.YELLOW);
+				}
+				//plot do ponto
 				g.drawLine(x,y,x,y);
+				//armazenamos o ponto na lista de desenhos
 				quadro.ultimo.elemento.add(new desenho(x,y));
 				if(dy<dx){
 					p=2*dy-dx;
@@ -1012,7 +1447,9 @@ class Display extends JPanel{
 							y+=incry;
 							p+=const2;
 						}
+						//armazenamos o ponto na lista de desenhos
 						quadro.ultimo.elemento.add(new desenho(x,y));
+						//plot do ponto
 						g.drawLine(x,y,x,y);
 					}
 				}
@@ -1029,23 +1466,50 @@ class Display extends JPanel{
 							x+=incrx;
 							p+=const2;
 						}
+						//armazenamos o ponto na lista de desenhos
 						quadro.ultimo.elemento.add(new desenho(x,y));
+						//plot do ponto
 						g.drawLine(x,y,x,y);
 					}
 				}
 			}
+			/*
+			Caso o botão Circunferencia for selecionado, executaremos o if abaixo
+			*/
 			else if(circunferencia_abilitado){
+				/*Com o intuito de evitar alocar inúmeros desenhos vazios na lista,
+				verificamos se o array list desenhos encontra-se preenchido
+				e alocamos um novo elemento na lista de desenhos*/
 				if(!desenhos.isEmpty()){
 					ArrayList<desenho> tmp = new ArrayList<>();
 					quadro.inserir(tmp);
+					quadro.ultimo.cor=cor;
 				}
 				int xc=desenhos.get(0).x,yc=desenhos.get(0).y,p,x=desenhos.get(desenhos.size()-1).x,y=desenhos.get(desenhos.size()-1).y,r;
 				dx=x2-x1;
 				dy=y2-y1;
 				r=(int)(Math.sqrt((Math.pow(dx,2)+Math.pow(dy,2))));
 				if(!desenhos.isEmpty()){
+					//armazenamos os pontos na lista de desenhos
 					inserePontos(xc,yc,x,y);
 				}
+				//o desenho é plotado de acordo com a cor desejada
+				if(cor==0){
+					g.setColor(Color.RED);
+				}
+				else if(cor==1){
+					g.setColor(Color.BLACK);
+				}
+				else if(cor==2){
+					g.setColor(Color.GREEN);
+				}
+				else if(cor==3){
+					g.setColor(Color.BLUE);
+				}
+				else if(cor==4){
+					g.setColor(Color.YELLOW);
+				}
+				//plot dos pontos
 				g.drawLine(xc+x,yc+y,xc+x,yc+y);
 				g.drawLine(xc-x,yc+y,xc-x,yc+y);
 				g.drawLine(xc+x,yc-y,xc+x,yc-y);
@@ -1058,8 +1522,10 @@ class Display extends JPanel{
 				y=r;
 				p=3-2*r;
 				if(!desenhos.isEmpty()){
+					//armazenamos os pontos na lista de desenhos
 					inserePontos(xc,yc,x,y);
 				}
+				//plot dos pontos
 				g.drawLine(xc+x,yc+y,xc+x,yc+y);
 				g.drawLine(xc-x,yc+y,xc-x,yc+y);
 				g.drawLine(xc+x,yc-y,xc+x,yc-y);
@@ -1078,8 +1544,10 @@ class Display extends JPanel{
 					}
 					x=x+1;
 					if(!desenhos.isEmpty()){
+						//armazenamos os pontos na lista de desenhos
 						inserePontos(xc,yc,x,y);
 					}
+					//plot dos pontos
 					g.drawLine(xc+x,yc+y,xc+x,yc+y);
 					g.drawLine(xc-x,yc+y,xc-x,yc+y);
 					g.drawLine(xc+x,yc-y,xc+x,yc-y);
@@ -1096,32 +1564,66 @@ class Display extends JPanel{
 					desenhos.clear();
 				}
 			}
+			/*
+			Caso o botão Retangulos for selecionado, executaremos o if abaixo
+			*/
 			else if(retangulo){
+				/*Com o intuito de evitar alocar inúmeros desenhos vazios na lista,
+				verificamos se o array list desenhos encontra-se preenchido
+				e alocamos um novo elemento na lista de desenhos*/
 				if(!desenhos.isEmpty()){
 					ArrayList<desenho> tmp = new ArrayList<>();
 					quadro.inserir(tmp);
+					quadro.ultimo.cor=cor;
 					desenhos.clear();
 				}
+				//o desenho é plotado de acordo com a cor desejada
+				if(cor==0){
+					g.setColor(Color.RED);
+				}
+				else if(cor==1){
+					g.setColor(Color.BLACK);
+				}
+				else if(cor==2){
+					g.setColor(Color.GREEN);
+				}
+				else if(cor==3){
+					g.setColor(Color.BLUE);
+				}
+				else if(cor==4){
+					g.setColor(Color.YELLOW);
+				}
 				for(int i=0;i<Maior(x1,x2)-Menor(x1,x2);i++){
+					//plot do ponto
 					g.drawLine(Menor(x1,x2)+i,Menor(y1,y2),Menor(x1,x2)+i,Menor(y1,y2));
+					//armazenamos o ponto da lista de desenhos
 					quadro.ultimo.elemento.add(new desenho(Menor(x1,x2)+i,Menor(y1,y2)));
 				}
 				for(int i=0;i<Maior(y1,y2)-Menor(y1,y2);i++){
+					//plot do ponto
 					g.drawLine(Menor(x1,x2),Menor(y1,y2)+i,Menor(x1,x2),Menor(y1,y2)+i);
+					//armazenamos o ponto na lista de desenhos
 					quadro.ultimo.elemento.add(new desenho(Menor(x1,x2),Menor(y1,y2)+i));
 				}
 				for(int i=0;i<Maior(y1,y2)-Menor(y1,y2);i++){
+					//plot do ponto
 					g.drawLine(Maior(x1,x2),Menor(y1,y2)+i,Maior(x1,x2),Menor(y1,y2)+i);
+					//armazenamos o ponto na lista de desnhos
 					quadro.ultimo.elemento.add(new desenho(Maior(x1,x2),Menor(y1,y2)+i));
 				}
 				for(int i=0;i<Maior(x1,x2)-Menor(x1,x2);i++){
+					//plot do ponto
 					g.drawLine(Menor(x1,x2)+i,Maior(y1,y2),Menor(x1,x2)+i,Maior(y1,y2));
+					//armazenamos o ponto na lista de desenhos
 					quadro.ultimo.elemento.add(new desenho(Menor(x1,x2)+i,Maior(y1,y2)));
 				}
-				//g.drawRect(Menor(x1,x2), Menor(y1,y2), (Maior(x1,x2)-Menor(x1,x2)), (Maior(y1,y2)-Menor(y1,y2)));
 			}
+			/*
+			Caso o botão Recorte for selecionado, executaremos o if abaixo
+			*/
 			else if(recorte){
-				//Em cada desenho no quadro, os pontos que estiverem fora da área selecionada são removidos
+				/*Em cada desenho no quadro, os pontos que estiverem fora
+				da área selecionada são removidos*/
 				for(Celula c=quadro.primeiro;c!=null;c=c.prox){
 					for(int i=0;i<c.elemento.size();i++){
 						if(c.elemento.get(i).x<Menor(x1,x2)){
@@ -1138,11 +1640,18 @@ class Display extends JPanel{
 						}
 					}
 				}
-				g.clearRect(0, 100, 1030, (Menor(y1,y2)-100)); //apaga região acima da área selecionada
-				g.clearRect(0, Maior(y1,y2), 1030, (700-Maior(y1,y2))); //apaga a região abaixo da área selecionada
-				g.clearRect(Maior(x1,x2), 100, (1030-Maior(x1,x2)), 600); //apaga a região à direita da área selecionada
-				g.clearRect(0, 100, Menor(x1,x2), 600); //apaga a região à esquerda da área selecionada
+				//apaga região acima da área selecionada
+				g.clearRect(0, 100, 1015, (Menor(y1,y2)-100));
+				//apaga a região abaixo da área selecionada
+				g.clearRect(0, Maior(y1,y2), 1015, (700-Maior(y1,y2)));
+				//apaga a região à direita da área selecionada
+				g.clearRect(Maior(x1,x2), 100, (1015-Maior(x1,x2)), 600);
+				//apaga a região à esquerda da área selecionada
+				g.clearRect(0, 100, Menor(x1,x2), 600);
 			}
+			/*
+			Caso o botão Cohen-Sutherland for selecionado, executaremos o if abaixo
+			*/
 			else if(cohen){
 				int cfora, xInt=0,yInt=0;
 				xMin=Menor(x1,x2);
@@ -1213,14 +1722,34 @@ class Display extends JPanel{
 								i.elemento.remove(j);
 							}
 						}
+						//colore de branco, o segmento de reta que deve ser retirado
 						g.setColor(Color.WHITE);
 						g.drawLine(i.elemento.get(0).x,i.elemento.get(0).y,x01,y01);
 						g.drawLine(x02,y02,i.elemento.get(i.elemento.size()-1).x,i.elemento.get(i.elemento.size()-1).y);
-						g.setColor(Color.BLACK);
+						//o desenho é plotado de acordo com a cor do objeto
+						if(i.cor==0){
+							g.setColor(Color.RED);
+						}
+						else if(i.cor==1){
+							g.setColor(Color.BLACK);
+						}
+						else if(i.cor==2){
+							g.setColor(Color.GREEN);
+						}
+						else if(i.cor==3){
+							g.setColor(Color.BLUE);
+						}
+						else if(i.cor==4){
+							g.setColor(Color.YELLOW);
+						}
+						//plot da reta
 						g.drawLine(Math.round(x01),Math.round(y01),Math.round(x02),Math.round(y02));
 					}
 				}
 			}
+			/*
+			Caso o botão Liang-Barsky for selecionado, executaremos o if abaixo
+			*/
 			else if(liang){
 				xMin=Menor(x1,x2);
 				yMin=Menor(y1,y2);
@@ -1250,24 +1779,52 @@ class Display extends JPanel{
 					}
 				}
 			}
+			/*
+			Caso o botão Rasterização de Retas for selecionado, executaremos o if abaixo
+			*/
 			else if(rasterizacao){
+				/*Com o intuito de evitar alocar inúmeros desenhos vazios na lista,
+				verificamos se o array list desenhos encontra-se preenchido
+				e alocamos um novo elemento na lista de desenhos*/
 				if(!desenhos.isEmpty()){
 					ArrayList<desenho> tmp = new ArrayList<>();
 					quadro.inserir(tmp);
+					quadro.ultimo.cor=cor;
 					desenhos.clear();
 				}
 				float m=(y1-y2)/(x1-x2);
 				float b=y1-(m*x1);
 				float y;
+				//o desenho é plotado de acordo com a cor desejada
+				if(cor==0){
+					g.setColor(Color.RED);
+				}
+				else if(cor==1){
+					g.setColor(Color.BLACK);
+				}
+				else if(cor==2){
+					g.setColor(Color.GREEN);
+				}
+				else if(cor==3){
+					g.setColor(Color.BLUE);
+				}
+				else if(cor==4){
+					g.setColor(Color.YELLOW);
+				}
 				for(int x=Menor(x1,x2);x<Maior(x1,x2);x++){
 					y=(m*x)+b;
+					//armazena o ponto na lista de desenhos
 					quadro.ultimo.elemento.add(new desenho(x,(int)(Math.round(y))));
+					//plot do ponto
 					g.drawLine(x,(int)(Math.round(y)),x,(int)(Math.round(y)));
 				}
 			}
 		}
 	}
 
+	/*
+	Método usado para armazenar os pontos da circunferencia na lista de desenhos
+	*/
 	public void inserePontos(int xc, int yc, int x, int y){
 		quadro.ultimo.elemento.add(new desenho((xc+x),(yc+y)));
 		quadro.ultimo.elemento.add(new desenho((xc-x),(yc+y)));
@@ -1279,6 +1836,10 @@ class Display extends JPanel{
 		quadro.ultimo.elemento.add(new desenho((xc-y),(yc-x)));
 	}
 
+	/*
+	Método usado pelo Cohen-Sutherland para verificar a região onde se encontra um
+	determinado ponto do desenho
+	*/
 	public int regionCode(int x, int y){
 		int codigo=0;
 		if(x<xMin){
@@ -1296,6 +1857,9 @@ class Display extends JPanel{
 		return codigo;
 	}
 
+	/*
+	Método usado para extrairmos o maior valor entre dois números
+	*/
 	public int Maior(int x, int y){
 		if(x>y){
 			return x;
@@ -1303,6 +1867,9 @@ class Display extends JPanel{
 		return y;
 	}
 
+	/*
+	Método usado para extrairmos o menor valor entre dois números
+	*/
 	public int Menor(int x, int y){
 		if(x<y){
 			return x;
@@ -1310,6 +1877,9 @@ class Display extends JPanel{
 		return y;
 	}
 
+	/*
+	Método usado pelo Liang-Barsky para o recorte do desenho
+	*/
 	public boolean cliptest(int p,int q, double u1,double u2){
 		boolean result=true;
 		double r;
@@ -1337,13 +1907,49 @@ class Display extends JPanel{
 		return result;
 	}
 
+	/*
+	Método usado para armazenarmos todos os pontos de todos os desenhos num arquivo
+	que será lido pelo load, toda vez que o paint for executado
+	*/
+	public void save(){
+		File file=new File("quadro.txt");
+		try{
+			if(!file.exists()){
+				file.delete();
+			}
+			FileWriter fw=new FileWriter(file);
+			BufferedWriter bw=new BufferedWriter(fw);
+			for(Celula i=quadro.primeiro;i!=null;i=i.prox){
+				//A primeira linha refere-se à cor do objeto
+				bw.write(i.cor+"\n");
+				for(int j=0;j<i.elemento.size();j++){
+					//Armazena-se a seguir, todos os pontos do objeto 
+					bw.write(i.elemento.get(j).x+","+i.elemento.get(j).y+" ");
+				}
+				bw.write("\n");
+			}
+			bw.close();
+		}catch(Exception erro){}
+	}
+
 	public class time extends Thread{
 		public void run(){
 			while(true){
+				/*
+				Caso o botão Salvar for selecionado, executaremos o if abaixo
+				*/
+				if(salvar){
+					save();
+					salvar=false;
+				}
 				try{
 					Point pointer = getMousePosition();
+					/*Somente salvamos os pontos válidos para um desenho. Ou seja, se o
+					ponto onde o usuário quer desenhar, estiver abaixo da região dos botões
+					*/
 					if(pointer.y>=100){
 						setMouse(mouse);
+						//O desenho é feito apenas se o botão do mouse estiver pressionado
 						if(pressionado){
 							desenhos.add(new desenho(pointer.x,pointer.y));
 							if(desenho_livre){
@@ -1364,6 +1970,9 @@ class Display extends JPanel{
 			}
 		}
 	}
+	/*
+	Estrutura de dados utilizada para armazenamento dos desenhos: Lista encadeada
+	*/
 	class Lista{
 		Celula primeiro,ultimo;
 	 
@@ -1381,10 +1990,13 @@ class Display extends JPanel{
 		   }
 		}
 
+		/*A lista perde a referência de seus objetos para "deletar" os objetos
+		até o coletor de lixo do java realmente deletá-los*/
 		void clear(){
 			primeiro=ultimo=null;
 		}
-	 
+		
+		/*Retorna o tamanho da lista (quantidade de elementos armazenados)*/
 		int tamanho(){
 		   int resp=0;
 		   for(Celula i=primeiro;i!=null;i=i.prox){
@@ -1394,10 +2006,15 @@ class Display extends JPanel{
 		}
 	 }
 	 
+	 /*
+	 Estrutura utilizada como se fosse o desenho propriamente dito, aqui são armazenados
+	 os pontos de um determinado desenho e sua cor. No caso da circunferência, armazenamos
+	 o ponto do centro da circunferência e seu tipo (representando ser um circunferência).
+	 */
 	 class Celula{
 		ArrayList<desenho> elemento;
 		Celula prox;
-		int tipo,xc,yc;
+		int tipo,xc,yc,cor;
 	 
 		public Celula(ArrayList <desenho> elemento){
 			this.elemento=elemento;
@@ -1405,6 +2022,7 @@ class Display extends JPanel{
 			tipo=0;
 			xc=0;
 			yc=0;
+			cor=1;
 		}
 	 }
 }
